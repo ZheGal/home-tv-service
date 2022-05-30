@@ -1,0 +1,5 @@
+version: '3.8'
+
+services:
+  home_tv_app:
+    command: yarn start:dev
