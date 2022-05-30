@@ -21,7 +21,7 @@ services:
       DATABASE_URL: postgres://admin:password@postgres:5432/hometv
       NODE_ENV: development
       PORT: 3000
-    command: yarn start
+    command: npm run start
     volumes:
       - "./server/src/:/usr/src/app/src/"
     ports:

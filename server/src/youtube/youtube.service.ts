@@ -5,10 +5,9 @@ import * as ytpl from 'ytpl';
 @Injectable()
 export class YoutubeService {
     async getChannelLives(channelId: string) {
-        const playlist = await ytpl(channelId);
+        const playlist = await ytpl(channelId, { limit: 1000 });
         if (playlist.items) {
             const lives = playlist.items.filter(item => item.isLive);
-            console.log(lives);
             if (lives[0]) {
                 return lives[0].id;
             }
