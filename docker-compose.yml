@@ -8,23 +8,8 @@ services:
     volumes:
       - ./database:/var/lib/postgresql
     ports:
-      - "5433:5432"
+      - "15432:5432"
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password
       POSTGRES_DB: hometv
-
-  home_tv_app:
-    build: ./server/
-    restart: unless-stopped
-    environment: 
-      DATABASE_URL: postgres://admin:password@postgres:5432/hometv
-      NODE_ENV: development
-      PORT: 3000
-    command: npm run start
-    volumes:
-      - "./server/src/:/usr/src/app/src/"
-    ports:
-      - "8080:3000"
-    depends_on: 
-      - home_tv_database
