@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Redirect, UsePipes, ValidationPipe } from '@nestjs/common';
 import { SettingService } from 'src/setting/setting.service';
 import { LoginDto } from './dto/login.dto';
 import { KstvService } from './kstv.service';
@@ -26,5 +26,47 @@ export class KstvController {
         }
         const list = await this.kstvService.getListFromServer(sessionId);
         return list;
+    }
+
+    @Get('/:id/index.m3u8')
+    async initLiveStream(
+        @Param('id') id: string,
+    ) {
+        const sessionId = (await this.settingService.getSettings('kstvSession'))?.kstvSession;
+        if (!sessionId) {
+            return null;
+        }
+        const url = await this.kstvService.getLiveStreamUrl(id, sessionId);
+        const data = await this.kstvService.getLiveStreamData(url);
+        return data;
+    }
+
+    @Get('/:id/:stream\.m3u8')
+    async playLiveStream(
+        @Param('id') id: string,
+        @Param('stream') stream: string,
+    ) {
+        const sessionId = (await this.settingService.getSettings('kstvSession'))?.kstvSession;
+        if (!sessionId) {
+            return null;
+        }
+        const url = await this.kstvService.getLiveStreamUrl(id, sessionId);
+        const parsePlaylistUrl = await this.kstvService.parsePlaylistUrl(url, stream);
+        return parsePlaylistUrl;
+    }
+
+    @Get('/:id/:segment\.ts')
+    @Redirect()
+    async playSegment(
+        @Param('id') id: string,
+        @Param('segment') segment: string,
+    ) {
+        const sessionId = (await this.settingService.getSettings('kstvSession'))?.kstvSession;
+        if (!sessionId) {
+            return null;
+        }
+        const url = await this.kstvService.getLiveStreamUrl(id, sessionId);
+        const parseSegment = await this.kstvService.getVideoSegment(url, segment);
+        return { url: parseSegment };
     }
 }

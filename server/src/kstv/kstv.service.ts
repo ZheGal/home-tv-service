@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import axios, { AxiosRequestHeaders } from 'axios';
+import { createReadStream } from 'fs';
 import { LoginDto } from './dto/login.dto';
 
 @Injectable()
@@ -55,6 +56,59 @@ export class KstvService {
       'x-vidmind-device-type': 'web',
     };
     return await this.sendKyivstarRequest(data, headers);
+  }
+
+  async getLiveStreamUrl(id: string, sessionId: string) {
+    const data = {
+      "operationName": "PlayVodV2",
+      "variables": { id },
+      "extensions": {
+        "persistedQuery": {
+          "version": 1,
+          "sha256Hash": "220e4e616f821e77b7491c4506acd53bfa9b5e286d02ae9015e67534d8eaf8cf"
+        }
+      }
+    };
+    const headers = {
+      authority: 'sundog.production.vidmind.com',
+      'content-type': 'application/json',
+      'x-vidmind-app-version': 'default',
+      'x-vidmind-authorization': sessionId, 
+      'x-vidmind-device-id': '192561847',
+      'x-vidmind-device-type': 'web',
+    };
+    const result = await this.sendKyivstarRequest(data, headers);
+    const streamUrl = result.data['playVodV2']['url'];
+    return streamUrl ?? null;
+  }
+
+  async parsePlaylistUrl(source: string, stream: string) {
+    const sourceUrl = await axios.get(source);
+    const url = sourceUrl.request.res.responseUrl;
+    const parseUrl = new URL(url);
+    const pathname = parseUrl.pathname.split('/');
+    pathname.pop();
+    pathname.push(stream);
+    parseUrl.pathname = `${pathname.join('/')}.m3u8`;
+    const playlistData = await axios.get(`${parseUrl}`);
+    return playlistData.data;
+  }
+
+  async getVideoSegment(source: string, segment: string) {
+    const sourceUrl = await axios.get(source);
+    const url = sourceUrl.request.res.responseUrl;
+    const parseUrl = new URL(url);
+    const pathname = parseUrl.pathname.split('/');
+    pathname.pop();
+    pathname.push(segment);
+    parseUrl.pathname = `${pathname.join('/')}.ts`;
+    
+    return parseUrl;
+  }
+
+  async getLiveStreamData(url: string) {
+    const request = await axios.get(url);
+    return request.data;
   }
 
   async sendKyivstarRequest(data: object, headers: AxiosRequestHeaders) {
